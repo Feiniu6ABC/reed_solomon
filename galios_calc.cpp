@@ -5,49 +5,50 @@ int gf256_add(int a, int b) {
     return a ^ b;
 }
 
+// 函数：在GF(2^8)上执行乘法
 int gf256_mul(int a, int b) {
-    int result = 0;
-    int polynomial = 0x11b; // 不可约多项式 x^8 + x^4 + x^3 + x + 1
-    for (int i = 0; i < 8; i++) {
-        if (b & 1) { // 检查b的最低位
-            result ^= a; // 将a加到结果上
+    int tmp = 0;
+    const int mod = 0x11B;  // 不可约多项式 x^8 + x^4 + x^3 + x + 1，用十六进制表示
+
+    // 乘法操作：对b的每一位进行检查并相应地将a的移位结果异或到tmp中
+    for (int i = 0; i < 8; ++i) {  // 只需要迭代8次，因为我们处理的是8位
+        if ((b >> i) & 1) {  // 检查b的第i位是否为1
+            tmp ^= a << i;  // 将a左移i位并异或到tmp
         }
-        int high_bit = a & 0x80; // 检查a的最高位
-        a <<= 1; // 将a左移一位
-        if (high_bit) {
-            a ^= polynomial; // 如果最高位是1，执行模不可约多项式
+    }
+
+    // 模约简操作：确保结果不超过8位
+    for (int i = 15; i >= 8; --i) {
+        if ((tmp >> i) & 1) {  // 检查第i位是否为1
+            tmp ^= mod << (i - 8);  // 将不可约多项式左移适当的位数并进行异或操作
         }
-        b >>= 1; // 将b右移一位
+    }
+
+    return tmp & 0xFF;  // 确保结果是一个字节大小
+}
+
+
+// 函数：执行指数运算
+int gf256_exp(int a, int exp) {
+    int result = 1;
+    while (exp > 0) {
+        if (exp & 1) {
+            result = gf256_mul(result, a);  // 当exp的当前位为1时，乘以当前的a
+        }
+        a = gf256_mul(a, a);  // a自乘，计算下一个平方
+        exp >>= 1;  // exp右移一位
     }
     return result;
 }
 
+// 函数：计算乘法逆元
 int gf256_inv(int x) {
-    int z = x;
-    for (int i = 0; i < 6; i++) {
-        z = gf256_mul(z, z);  // 先平方
-        z = gf256_mul(z, x);  // 再乘以 x
-    }
-    z = gf256_mul(z, z);  // 最后再平方一次
-    return z;
+    // 计算x^(2^8 - 2) = x^254，根据费马小定理
+    return gf256_exp(x, 254);
 }
 
-// GF(2^8) 除法
+
 int gf256_div(int a, int b) {
     int inv_b = gf256_inv(b);
     return gf256_mul(a, inv_b);
-}
-
-int main() {
-    int a = 0x17;  // 示例值
-    int b = 0x23;  // 示例值
-    int result = gf256_mul(a, b);
-    printf("Result of GF(2^8) multiplication: 0x%X\n", result);
-
-    int result2 = gf256_inv(b);
-    printf("Result of GF(2^8) inversion: 0x%X\n", result2);
-
-    result = gf256_div(a, b);
-    printf("Result of GF(2^8) division: 0x%X\n", result);
-    return 0;
 }
