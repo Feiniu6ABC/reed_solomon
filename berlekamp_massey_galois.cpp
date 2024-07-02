@@ -50,7 +50,7 @@ vgf256 berlekampMassey(const gf256* initial_values_ptr, int n) {
     }
 
     // Reverse the polynomial coefficients
-    std::reverse(C.begin(), C.end());
+    //std::reverse(C.begin(), C.end());
 
     return C;
 }
