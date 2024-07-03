@@ -38,11 +38,13 @@ reg [7:0] n;
 
 reg [3:0] current_state;
 reg [3:0] next_state;
-// 有限域算术模块实例化
-wire [7:0] sum_tree[MAX_LENGTH-1:0];
+
+//wire [7:0] sum_tree[MAX_LENGTH-1:0];
 
 wire [7:0] gf256_mul_result[MAX_LENGTH-1:0];
 reg  [7:0] gf256_mul_result_reg[MAX_LENGTH-1:0];
+
+wire [7:0] sum_result;
 
 parameter IDLE = 4'b0;
 parameter INPUT = 4'b1;
@@ -155,27 +157,17 @@ always @(posedge clk) begin
     end
 end
 
-assign sum_tree[0] = products_reg[0] ^ products_reg[1];
-assign sum_tree[1] = products_reg[2] ^ products_reg[3];
-assign sum_tree[2] = products_reg[4] ^ products_reg[5];
-assign sum_tree[3] = products_reg[6] ^ products_reg[7];
-assign sum_tree[4] = products_reg[8] ^ products_reg[9];
-assign sum_tree[5] = products_reg[10] ^ products_reg[11];
-assign sum_tree[6] = products_reg[12] ^ products_reg[13];
-assign sum_tree[7] = products_reg[14] ^ products_reg[15];
+tree_adder #(
+    .NUM_INPUTS(16),
+    .DATA_WIDTH(8)
+) adder_inst (
+    .data_in(products_reg),
+    .data_out(sum_result)
+);
 
-assign sum_tree[8] = sum_tree[0] ^ sum_tree[1];
-assign sum_tree[9] = sum_tree[2] ^ sum_tree[3];
-assign sum_tree[10] = sum_tree[4] ^ sum_tree[5];
-assign sum_tree[11] = sum_tree[6] ^ sum_tree[7];
-
-assign sum_tree[12] = sum_tree[8] ^ sum_tree[9];
-assign sum_tree[13] = sum_tree[10] ^ sum_tree[11];
-
-assign sum_tree[14] = sum_tree[12] ^ sum_tree[13];
 
 always @(posedge clk) begin
-    d <= sum_tree[14];
+    d <= sum_result;
 end
 
 
@@ -184,18 +176,29 @@ always@(posedge clk or negedge rst_n)begin
         for (i = 0; i < MAX_LENGTH; i = i + 1) begin
             C[i] <= 8'b0;
         end
+        C_ptr <= 8'b0;
     end
     if (current_state == INPUT)begin
         for (i = 1; i < MAX_LENGTH; i = i + 1) begin
             C[i] <= 8'b0;
         end
-        C[0] = 8'b1;
+        C[0] <= 8'b1;
+        C_ptr <= 8'b0;
     end else if (current_state == RESIZE)begin
         if (C_ptr >= (B_ptr + m))begin
             C_ptr <= C_ptr;
         end else begin
             C_ptr <= (B_ptr + m);
         end
+        C <= C;
+    end else if (current_state == UPDATE_C)begin
+        for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+            C[i + m] <= adder_out[i];
+        end
+        C_ptr <= C_ptr;
+    end else begin
+        C       <= C;
+        C_ptr   <= C_ptr;
     end
 end
 
@@ -217,11 +220,61 @@ generate
 endgenerate
 
 // 在时钟上升沿捕获乘法结果并存储到寄存器中
-always @(posedge clk) begin
-    for (i = 0; i < MAX_LENGTH; i = i + 1) begin
-        gf256_mul_result_reg[i] <= gf256_mul_result[i];
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)begin
+        gf256_mul_result_reg <= '0;
+    end else begin
+        for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+            gf256_mul_result_reg[i] <= gf256_mul_result[i];
+        end
     end
 end
 
+genvar i;
+generate
+    for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+
+        //assign adder_in[i] = (i < B_size) ? gf256_mul_result_reg[i] : 8'b0;
+        assign adder_in[i] =  gf256_mul_result_reg[i];
+        
+        gf256_adder adder_inst (
+            .a(C[i + m]),
+            .b(adder_in[i]),
+            .sum(adder_out[i])
+        );
+    end
+endgenerate
+
+
+always@(posedge clk or negedge rst_n)begin
+    if (!rst_n)begin
+        L <= 8'b0;
+        b <= 8'b1;
+        m <= 8'b1;
+        for (i = 1; i < MAX_LENGTH; i = i + 1) begin
+            B[i] <= 8'b0;
+        end
+        B[0] <= 8'b1;
+    end else begin
+        if (current_state == UPDATE_C)begin
+            if ((L << 1) <= N)begin
+                L <= N + 1 - L;
+                B <= T;
+                b <= d;
+                m <= 1;
+            end else begin
+                    L <= L;
+                    B <= B;
+                    b <= b;
+                    m <= m + 1;
+                end
+        end else begin
+                L <= L;
+                B <= B;
+                b <= b;
+                m <= m;
+        end
+    end
+end
 
 endmodule
