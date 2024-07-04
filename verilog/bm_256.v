@@ -1,9 +1,10 @@
+//Todo: add update for B_ptr
+
 module BerlekampMassey(
     input rst_n,
     input clk,
     input reset,
-    input enable,
-    input [7:0] data_in,
+    input [127:0] data_in,
     input [7:0] syndome_len,
     input valid_in,
     output reg [7:0] poly_out,
@@ -11,21 +12,20 @@ module BerlekampMassey(
     output reg busy
 );
 
-parameter MAX_LENGTH = 16;  
+//parameter 16 = 16;  
 
-reg [7:0] data_buffer[MAX_LENGTH-1:0];
-reg [7:0] data_pointer;
+reg [7:0] data_buffer[16-1:0];
 
-reg [7:0] C[MAX_LENGTH-1:0];
-reg [7:0] B[MAX_LENGTH-1:0];
-reg [7:0] T[MAX_LENGTH-1:0];
+reg [7:0] C[16-1:0];
+reg [7:0] B[16-1:0];
+reg [7:0] T[16-1:0];
 reg [7:0] L, m, N;
 reg [7:0] b, d, coef;
 reg [7:0] temp;
 
 
-wire [7:0] products[MAX_LENGTH-1:0];
-wire [7:0] products[MAX_LENGTH-1:0];
+wire [7:0] products[16-1:0];
+wire [7:0] products[16-1:0];
 
 wire resize;
 
@@ -33,16 +33,17 @@ reg [7:0] C_ptr;
 reg [7:0] B_ptr;
 reg [7:0] T_ptr;
 
-reg [7:0] counter;
+
+reg [7:0] length;
 reg [7:0] n;
 
 reg [3:0] current_state;
 reg [3:0] next_state;
 
-//wire [7:0] sum_tree[MAX_LENGTH-1:0];
+//wire [7:0] sum_tree[16-1:0];
 
-wire [7:0] gf256_mul_result[MAX_LENGTH-1:0];
-reg  [7:0] gf256_mul_result_reg[MAX_LENGTH-1:0];
+wire [7:0] gf256_mul_result[16-1:0];
+reg  [7:0] gf256_mul_result_reg[16-1:0];
 
 wire [7:0] sum_result;
 
@@ -65,23 +66,17 @@ end
 
 always@(*)begin
     case(current_state)
-        IDLE: if (enable)begin
+        IDLE: if (valid_in)begin
                 next_state  = INPUT;
             end else begin
                 next_state = next_state;
             end
-        INPUT:  if (data_pointer == syndome_len - 1)begin
-                    next_state = CALC_D;
-                end else begin
-                    next_state = next_state;
-                end
         CALC_D: if (calc_done)begin
                     next_state = DONE;
                 end else begin
                     next_state = RESIZE;
                 end
-        RESIZE:
-                next_state = UPDATE_C;
+
         UPDATE_C:
                 if (calc_done)begin
                     next_state = FINISH;
@@ -101,10 +96,10 @@ always@(posede clk or negedge rst_n)begin
     if (!rst_n)begin
         n <= 8'b0;
     end else begin
-        if (current_state == IDLE && enable)begin
-            n <= syndome_len;
-        end else if (current_state == FINISH)begin
-            n <= 8'b0;
+        if (current_state == IDLE || current_state == FINISH)begin
+            n <= 0;
+        end else if (current_state == CALC_D)begin
+            n <= n + 1;
         end else begin
             n <= n;
         end
@@ -117,11 +112,11 @@ always@(posedge clk or negedge rst_n)begin
         data_pointer <= 8'b0;
     end else begin
         if (current_state == INPUT && valid_in)begin
-            data_buffer[data_pointer] = data_in;
-            data_pointer <= data_pointer + 1;
+            for (int i = 0; i < 16; i = i + 1) begin
+            data_buffer[i] <= data_in[i*8 +: 8];
+            end
         end else begin
             data_buffer <= data_buffer;
-            data_pointer <= data_pointer;
         end
     end
 end
@@ -129,7 +124,7 @@ end
 
 genvar i;
 generate
-    for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+    for (i = 0; i < 16; i = i + 1) begin
         gf256_mult mult_inst (
             .a(C[i]),
             .b(data_buffer[i]),
@@ -140,22 +135,16 @@ endgenerate
 
 always @(posedge clk or rst_n) begin
     if (!rst_n)begin
-        for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+        for (i = 0; i < 16; i = i + 1) begin
             products_reg[i] <= 8'b0;
         end
     end else begin
-        for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+        for (i = 0; i < 16; i = i + 1) begin
             products_reg[i] <= products[i];
         end
     end
 end
 
-always @(posedge clk) begin
-    d <= 0; // 初始化 sum_reg 为 0
-    for (i = 0; i < MAX_LENGTH; i = i + 1) begin
-        d <= d ^ products_reg[i]; // 使用异或运算符计算 GF(256) 中的加法
-    end
-end
 
 tree_adder #(
     .NUM_INPUTS(16),
@@ -173,29 +162,28 @@ end
 
 always@(posedge clk or negedge rst_n)begin
     if (!rst_n)begin
-        for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+        for (i = 0; i < 16; i = i + 1) begin
             C[i] <= 8'b0;
         end
         C_ptr <= 8'b0;
     end
     if (current_state == INPUT)begin
-        for (i = 1; i < MAX_LENGTH; i = i + 1) begin
+        for (i = 1; i < 16; i = i + 1) begin
             C[i] <= 8'b0;
         end
         C[0] <= 8'b1;
         C_ptr <= 8'b0;
-    end else if (current_state == RESIZE)begin
+
+    end else if (current_state == UPDATE_C)begin
         if (C_ptr >= (B_ptr + m))begin
             C_ptr <= C_ptr;
         end else begin
             C_ptr <= (B_ptr + m);
         end
-        C <= C;
-    end else if (current_state == UPDATE_C)begin
-        for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+
+        for (i = 0; i < 16; i = i + 1) begin
             C[i + m] <= adder_out[i];
         end
-        C_ptr <= C_ptr;
     end else begin
         C       <= C;
         C_ptr   <= C_ptr;
@@ -210,7 +198,7 @@ gf256_div div_inst (
 
 genvar i;
 generate
-    for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+    for (i = 0; i < 16; i = i + 1) begin
         gf256_mul mul_inst (
             .a(coef),
             .b(B[i]),
@@ -224,7 +212,7 @@ always @(posedge clk or negedge rst_n) begin
     if (!rst_n)begin
         gf256_mul_result_reg <= '0;
     end else begin
-        for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+        for (i = 0; i < 16; i = i + 1) begin
             gf256_mul_result_reg[i] <= gf256_mul_result[i];
         end
     end
@@ -232,9 +220,8 @@ end
 
 genvar i;
 generate
-    for (i = 0; i < MAX_LENGTH; i = i + 1) begin
+    for (i = 0; i < 16; i = i + 1) begin
 
-        //assign adder_in[i] = (i < B_size) ? gf256_mul_result_reg[i] : 8'b0;
         assign adder_in[i] =  gf256_mul_result_reg[i];
         
         gf256_adder adder_inst (
@@ -251,7 +238,7 @@ always@(posedge clk or negedge rst_n)begin
         L <= 8'b0;
         b <= 8'b1;
         m <= 8'b1;
-        for (i = 1; i < MAX_LENGTH; i = i + 1) begin
+        for (i = 1; i < 16; i = i + 1) begin
             B[i] <= 8'b0;
         end
         B[0] <= 8'b1;
@@ -268,6 +255,14 @@ always@(posedge clk or negedge rst_n)begin
                     b <= b;
                     m <= m + 1;
                 end
+        else if (current_state == FINISH)begin
+            L <= 8'b0;
+            b <= 8'b1;
+            m <= 8'b1;
+            for (i = 1; i < 16; i = i + 1) begin
+                B[i] <= 8'b0;
+            end
+            B[0] <= 8'b1;
         end else begin
                 L <= L;
                 B <= B;
