@@ -15,9 +15,10 @@ reg [7:0] data_buffer[16-1:0];
 reg [7:0] C[16-1:0];
 reg [7:0] B[16-1:0];
 //reg [7:0] T[16-1:0];
-reg [7:0] L, m, N;
-reg [7:0] b, d, coef;
+reg [7:0] L, m, N, b, d;
 reg [7:0] temp;
+
+wire [7:0] coef;
 
 
 wire [7:0] products[16-1:0];
@@ -56,10 +57,9 @@ wire [7:0] sum_result;
 wire [127:0] poly_out_temp;
 
 parameter IDLE = 4'b0;
-parameter INPUT = 4'b1;
-parameter CALC_D = 4'b10;
-parameter UPDATE_C = 4'b11;
-parameter FINISH = 4'b100;
+parameter CALC_D = 4'b1;
+parameter UPDATE_C = 4'b10;
+parameter FINISH = 4'b11;
 
 always@(posedge clk or negedge rst_n)begin
     if (!rst_n)begin
@@ -110,7 +110,7 @@ end
 always@(*)begin
     case(current_state)
         IDLE: if (valid_in)begin
-                next_state  = INPUT;
+                next_state  = CALC_D;
             end else begin
                 next_state = IDLE;
             end
@@ -157,7 +157,7 @@ always @(posedge clk or negedge rst_n) begin
             data_buffer[i] <= 8'b0;
         end
     end else begin
-        if (current_state == INPUT && valid_in) begin
+        if (current_state == IDLE && valid_in) begin
             for (i = 0; i < 16; i = i + 1) begin
                 data_buffer[i] <= data_in[i*8 +: 8];
             end
@@ -169,7 +169,7 @@ end
 genvar gen_i;
 generate
     for (gen_i = 0; gen_i < 16; gen_i = gen_i + 1) begin
-        gf256_mult mult_inst (
+        gf256_mul mult_inst (
             .a(C[gen_i]),
             .b(data_buffer[gen_i]),
             .result(products[gen_i])
@@ -237,7 +237,7 @@ always@(posedge clk or negedge rst_n)begin
         end
         C_ptr <= 8'b0;
     end
-    if (current_state == INPUT)begin
+    if (current_state == IDLE)begin
         for (i = 1; i < 16; i = i + 1) begin
             C[i] <= 8'b0;
         end
@@ -264,6 +264,7 @@ gf256_div div_inst (
             .b(b),
             .result(coef)
 );
+
 
 genvar gen_j;
 generate
@@ -295,10 +296,10 @@ generate
 
         assign adder_in[k] =  gf256_mul_result_reg[k];
         
-        gf256_adder adder_inst (
+        gf256_add adder_inst (
             .a(C[k + m]),
             .b(adder_in[k]),
-            .sum(adder_out[k])
+            .result(adder_out[k])
         );
     end
 endgenerate
