@@ -40,7 +40,7 @@ initial begin
 
     // Test case using the same data as in C++ code
     #10;
-    data_in = 128'h02_04_08_10_20_80_80_02_04_08_10_20_40_80_00_00;
+    data_in = 128'h00_00_80_40_20_10_08_04_02_80_80_20_10_08_04_02;
     valid_in = 1;
     #10;
     valid_in = 0;
@@ -51,7 +51,7 @@ initial begin
     $display("%h", poly_out);
 
     // End simulation
-    #100;
+    #1000;
     $finish;
 end
 
