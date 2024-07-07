@@ -31,7 +31,7 @@ wire resize;
 
 reg [7:0] C_ptr;
 reg [7:0] B_ptr;
-reg [7:0] T_ptr;
+//reg [7:0] T_ptr;
 
 
 reg [7:0] length;
@@ -116,20 +116,16 @@ always@(*)begin
             end
         CALC_D: 
                 if (N<8'd16)begin
-                    if (sum_result == 8'b0)begin
-                        next_state = CALC_D;
-                    end else begin
-                        next_state = UPDATE_C;
-                    end
+                    next_state = UPDATE_C;
                 end else begin
                     next_state = FINISH;
                 end                   
             
         UPDATE_C:
-                if (N == 8'd15)begin
-                    next_state = FINISH;
-                end else begin
+                if (N < 8'd16)begin
                     next_state = CALC_D;
+                end else begin
+                    next_state = FINISH;
                 end
         FINISH:
                 next_state = IDLE;
@@ -170,8 +166,8 @@ genvar gen_i;
 generate
     for (gen_i = 0; gen_i < 16; gen_i = gen_i + 1) begin
         gf256_mul mult_inst (
-            .a(C[gen_i]),
-            .b(data_buffer[gen_i]),
+            .a(gen_i < L ? C[gen_i+1] : 8'b0),  // 只使用 C[1] 到 C[L]
+            .b(gen_i < N ? data_buffer[N-gen_i-1] : 8'b0),  // 使用正确的数据
             .result(products[gen_i])
         );
     end
@@ -190,14 +186,14 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 
-assign level1[0] = products_reg[0] ^ products_reg[1];
-assign level1[1] = products_reg[2] ^ products_reg[3];
-assign level1[2] = products_reg[4] ^ products_reg[5];
-assign level1[3] = products_reg[6] ^ products_reg[7];
-assign level1[4] = products_reg[8] ^ products_reg[9];
-assign level1[5] = products_reg[10] ^ products_reg[11];
-assign level1[6] = products_reg[12] ^ products_reg[13];
-assign level1[7] = products_reg[14] ^ products_reg[15];
+assign level1[0] = products[0] ^ products[1];
+assign level1[1] = products[2] ^ products[3];
+assign level1[2] = products[4] ^ products[5];
+assign level1[3] = products[6] ^ products[7];
+assign level1[4] = products[8] ^ products[9];
+assign level1[5] = products[10] ^ products[11];
+assign level1[6] = products[12] ^ products[13];
+assign level1[7] = products[14] ^ products[15];
 
 // 第二级：将第一级的8个结果两两异或，得到4个结果
 assign level2[0] = level1[0] ^ level1[1];
@@ -219,7 +215,13 @@ always @(posedge clk or negedge rst_n) begin
     end else begin
         case(current_state)
             CALC_D:
-                d <= sum_result;
+                begin
+                    if (N == 0)begin
+                        d <= data_buffer[0];
+                    end else begin
+                        d <= sum_result ^ data_buffer[N];
+                    end
+                end
             UPDATE_C:
                 d <= d;
             default:
@@ -245,17 +247,20 @@ always@(posedge clk or negedge rst_n)begin
         C_ptr <= 8'b0;
 
     end else if (current_state == UPDATE_C)begin
-        if (C_ptr >= (B_ptr + m))begin
-            C_ptr <= C_ptr;
-        end else begin
-            C_ptr <= (B_ptr + m);
-        end
+        if (d != 0)begin
+            if (C_ptr >= (B_ptr + m))begin
+                C_ptr <= C_ptr;
+            end else begin
+                C_ptr <= (B_ptr + m);
+            end
 
-        for (i = 0; i < 16; i = i + 1) begin
-            if ((i+m) < 16)begin
-                C[i + m] <= adder_out[i];
+            for (i = 0; i < 16; i = i + 1) begin
+                if ((i+m) < 16)begin
+                    C[i + m] <= adder_out[i];
+                end
             end
         end
+
     end 
 end
 
@@ -294,7 +299,7 @@ genvar k;
 generate
     for (k = 0; k < 16; k = k + 1) begin
 
-        assign adder_in[k] =  gf256_mul_result_reg[k];
+        assign adder_in[k] =  gf256_mul_result[k];
         
         gf256_add adder_inst (
             .a(C[k + m]),
@@ -311,7 +316,7 @@ always@(posedge clk or negedge rst_n)begin
         if (current_state == IDLE || current_state == FINISH)begin
             N <= 8'b0;
         end else begin
-            if (current_state == CALC_D)begin
+            if (current_state == UPDATE_C)begin
                 N <= N + 1;
             end
         end
@@ -330,7 +335,7 @@ always@(posedge clk or negedge rst_n)begin
         B_ptr <= 8'b0;
     end else begin
         if (current_state == UPDATE_C)begin
-            if ((L << 1) <= N)begin
+            if (((L << 1) <= N) && d != 0)begin
                 L <= N + 1 - L;
                 //B <= T;
                 for (i = 0; i < 16; i = i + 1) begin
@@ -360,17 +365,19 @@ always@(posedge clk or negedge rst_n)begin
     end else begin
         case(current_state)
             IDLE: m <= 8'b1;
+
             CALC_D:
-                if (next_state == UPDATE_C)begin
+                m <= m;
+
+            UPDATE_C:
+                if (d == 0)begin
                     m <= m + 1;
                 end else begin
-                    m <= m;
-                end
-            UPDATE_C:
-                if (2 * L <= N)begin
-                    m <= 1;
-                end else begin
-                    m <= m+1;
+                    if (2 * L <= N)begin
+                        m <= 1;
+                    end else begin
+                        m <= m + 1;
+                    end
                 end
             default:    m <= 1;
         endcase
