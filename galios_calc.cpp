@@ -186,15 +186,6 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 
-//assign level1[0] = products_reg[0] ^ products_reg[1];
-//assign level1[1] = products_reg[2] ^ products_reg[3];
-//assign level1[2] = products_reg[4] ^ products_reg[5];
-//assign level1[3] = products_reg[6] ^ products_reg[7];
-//assign level1[4] = products_reg[8] ^ products_reg[9];
-//assign level1[5] = products_reg[10] ^ products_reg[11];
-//assign level1[6] = products_reg[12] ^ products_reg[13];
-//assign level1[7] = products_reg[14] ^ products_reg[15];
-
 assign level1[0] = products[0] ^ products[1];
 assign level1[1] = products[2] ^ products[3];
 assign level1[2] = products[4] ^ products[5];
@@ -256,17 +247,20 @@ always@(posedge clk or negedge rst_n)begin
         C_ptr <= 8'b0;
 
     end else if (current_state == UPDATE_C)begin
-        if (C_ptr >= (B_ptr + m))begin
-            C_ptr <= C_ptr;
-        end else begin
-            C_ptr <= (B_ptr + m);
-        end
+        if (d != 0)begin
+            if (C_ptr >= (B_ptr + m))begin
+                C_ptr <= C_ptr;
+            end else begin
+                C_ptr <= (B_ptr + m);
+            end
 
-        for (i = 0; i < 16; i = i + 1) begin
-            if ((i+m) < 16)begin
-                C[i + m] <= adder_out[i];
+            for (i = 0; i < 16; i = i + 1) begin
+                if ((i+m) < 16)begin
+                    C[i + m] <= adder_out[i];
+                end
             end
         end
+
     end 
 end
 
@@ -341,7 +335,7 @@ always@(posedge clk or negedge rst_n)begin
         B_ptr <= 8'b0;
     end else begin
         if (current_state == UPDATE_C)begin
-            if ((L << 1) <= N)begin
+            if (((L << 1) <= N) && d != 0)begin
                 L <= N + 1 - L;
                 //B <= T;
                 for (i = 0; i < 16; i = i + 1) begin
@@ -371,6 +365,9 @@ always@(posedge clk or negedge rst_n)begin
     end else begin
         case(current_state)
             IDLE: m <= 8'b1;
+
+            CALC_D:
+                m <= m;
 
             UPDATE_C:
                 if (d == 0)begin
