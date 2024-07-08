@@ -34,7 +34,6 @@ reg [7:0] B_ptr;
 //reg [7:0] T_ptr;
 
 
-reg [7:0] length;
 reg [7:0] n;
 
 reg [3:0] current_state;
@@ -122,7 +121,7 @@ always@(*)begin
                 end                   
             
         UPDATE_C:
-                if (N < 8'd16)begin
+                if (N < 8'd15)begin
                     next_state = CALC_D;
                 end else begin
                     next_state = FINISH;
@@ -295,19 +294,23 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
+
 genvar k;
 generate
     for (k = 0; k < 16; k = k + 1) begin
+        wire [7:0] c_value;
+        assign c_value = (k + m < 16) ? C[k + m] : 8'b0;
 
-        assign adder_in[k] =  gf256_mul_result[k];
+        assign adder_in[k] = gf256_mul_result[k];
         
         gf256_add adder_inst (
-            .a(C[k + m]),
+            .a(c_value),
             .b(adder_in[k]),
             .result(adder_out[k])
         );
     end
 endgenerate
+
 
 always@(posedge clk or negedge rst_n)begin
     if (!rst_n)begin
@@ -317,7 +320,9 @@ always@(posedge clk or negedge rst_n)begin
             N <= 8'b0;
         end else begin
             if (current_state == UPDATE_C)begin
-                N <= N + 1;
+                if (N < 15)begin
+                    N <= N + 1;
+                end                
             end
         end
     end
