@@ -1,4 +1,4 @@
-module gf256_div_comb(
+module gf256_div(
     input [7:0] a,
     input [7:0] b,
     output [7:0] result
