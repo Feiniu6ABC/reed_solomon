@@ -13,7 +13,9 @@ print(data)
 
 def calculate_syndromes(received):
     # 将接收到的数据转换为 GF(2^8) 元素
-    received_gf = GF([int(x) for x in received])
+    received_array = GF(received[::-1])
+
+    received_gf = GF([int(x) for x in received_array])
     
     # 获取本原元
     alpha = GF.primitive_element
@@ -37,7 +39,7 @@ def calculate_syndromes(received):
 def chien_search(error_locator_poly):
     # 获取多项式系数
     sigma = error_locator_poly.coeffs[::-1]  # 反转系数顺序以匹配之前的格式
-    
+    sigma = error_locator_poly.coeffs
     alpha = GF.primitive_element
     errors = []
 
@@ -71,10 +73,12 @@ print("length of encoded data is %d" %(len(encoded_data)))
 print("Encoded Data:")
 print(encoded_data)
 
-encoded_data = encoded_data[::-1]
 
 encoded_data[0] = encoded_data[0] + GF(1)
 encoded_data[1] = encoded_data[1] + GF(1)
+
+
+#encoded_data = encoded_data[::-1]
 
 
 syndromes = calculate_syndromes(encoded_data)
