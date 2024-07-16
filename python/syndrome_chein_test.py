@@ -1,9 +1,12 @@
 import galois
 
-n = 255
-k = 239
-GF = galois.GF(2**8)
-
+# 参数设置
+n = 255  # 码字长度
+k = 239  # 信息长度
+GF = galois.GF(2**8, irreducible_poly=galois.Poly([1, 0, 0, 0, 1, 1, 0, 1, 1]))  # 使用伽罗瓦域 GF(2^8)
+#GF = galois.GF(2**8)
+# 生成数据
+#data = GF([2] * 239)  # 生成从 0 到 238 的数据
 data = GF(list(range(k)))
 
 print(data)
@@ -34,12 +37,11 @@ def calculate_syndromes(received):
 
 
 def chien_search(error_locator_poly):
-    # 获取多项式系数
-    #sigma = error_locator_poly.coeffs[::-1]  # 反转系数顺序以匹配之前的格式
     sigma = error_locator_poly.coeffs
     alpha = GF.primitive_element
     errors = []
 
+    
     for i in range(n - 1, -1, -1):  # 从 254 到 0
         x = alpha**i
         # 使用 Horner 方法进行多项式求值
@@ -56,7 +58,8 @@ def chien_search(error_locator_poly):
 
 #c = bch.encode(data)
 # 创建 Reed-Solomon 编码器
-rs = galois.ReedSolomon(n, k)
+rs = galois.ReedSolomon(n, k, field=GF)
+#rs = galois.ReedSolomon(n, k)
 
 print("generator poly is %d" %(rs.generator_poly))
 
@@ -71,9 +74,9 @@ print("Encoded Data:")
 print(encoded_data)
 
 
-encoded_data[0] = encoded_data[0] + GF(1)
+encoded_data[32] = encoded_data[32] + GF(1)
 encoded_data[1] = encoded_data[1] + GF(1)
-
+encoded_data[12] = encoded_data[12] + GF(1)
 
 #encoded_data = encoded_data[::-1]
 
@@ -87,3 +90,12 @@ print(f"Error locator polynomial: {error_locator_poly}")
 
 calculated_error_positions = chien_search(error_locator_poly)
 print(f"Calculated error positions: {calculated_error_positions}")
+
+#new_arr = [142, 71, 173, 216, 108, 54, 27, 131, 207, 233, 250, 125, 176, 88, 44, 22]
+print(galois.berlekamp_massey(syndromes).coeffs)
+
+GF_default = galois.GF(2**8)
+#print(f"默认不可约多项式: 0x{GF_default.irreducible_poly:x}")
+
+GF_11b = galois.GF(2**8, irreducible_poly=0x11b)
+#print(f"指定的不可约多项式: 0x{GF_11b.irreducible_poly:x}")
