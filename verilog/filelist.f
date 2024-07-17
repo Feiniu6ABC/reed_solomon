@@ -5,3 +5,5 @@
 ./gf256_mul.v
 ./gf265_div.v
 ./tree_adder.v
+./gf256_power_lut.v
+./syndrome_slice.v
