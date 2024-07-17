@@ -40,7 +40,10 @@ void riBM(const gf256* syndromes, gf256* lambda, gf256* omega) {
         gf256 delta = delta_prev[0];
         for (int i = 0; i <= T; i++) {
             lambda_curr[i] = gf256_add(gf256_mul(gamma, lambda_prev[i]),
-                                       gf256_mul(delta, b_prev[i]));
+                                       gf256_mul(delta, b_prev[i - 1]));
+            if (i == 0){
+                printf("b_prev[i-1] is %d", b_prev[i - 1]);
+            }
         }
 
         for (int i = 0; i < 2*T-1; i++) {
@@ -57,6 +60,7 @@ void riBM(const gf256* syndromes, gf256* lambda, gf256* omega) {
 
         // Step riBM.2
         if (delta != 0 && 2 * L <= r) {
+            printf("\n\nwrong!\n");
             memcpy(b_curr, lambda_prev, (T+1) * sizeof(gf256));
             for (int i = 0; i <= T; i++) {
                 b_curr[i] = gf256_div(b_curr[i], delta);
@@ -94,9 +98,9 @@ void riBM(const gf256* syndromes, gf256* lambda, gf256* omega) {
 
 int main() {
     //gf256 syndromes[2*T] = {1, 2, 4, 8, 16, 32, 64, 128, 2, 2, 4, 8, 7, 32, 64, 128};
-    //gf256 syndromes[2*T] = {1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128};
+    gf256 syndromes[2*T] = { 2, 4, 8, 16, 32, 64, 128, 2, 4, 8, 16, 32, 64, 128, 2, 4};
     //gf256 syndromes[2*T] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    gf256 syndromes[2*T] = {124, 140, 16, 202, 225, 27, 16, 117, 75, 92, 73, 94, 57, 27, 208, 205};
+    //gf256 syndromes[2*T] = {124, 140, 16, 202, 225, 27, 16, 117, 75, 92, 73, 94, 57, 27, 208, 205};
     gf256 lambda[T+1] = {0};
     gf256 omega[T] = {0};
     
