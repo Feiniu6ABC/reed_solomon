@@ -3,46 +3,78 @@ module syndrome_slice(
     input clk,
     input [127:0] data_in,
     input valid_in,
-    input i;
+    input [3:0] i,
 
-    output valid_out,
-    output busy
+    output valid_out
 );
 
-reg [7:0] data [255 : 0];
 reg [7:0] syndrome;
-reg [7:0] cnt;
+reg [4:0] cnt;
 
-wire [7:0]  alpha_power;
+wire [127:0] alpha_power;
+wire [127:0] mul_result;
 
-gf256_power_lut power_lut(
-    .addr   (i*cnt),
-    .data   (alpha_power)
-);
+wire [7:0] level1[7:0];
+wire [7:0] level2[3:0];
+wire [7:0] level3[1:0];
 
-always@(posedge clk or negedge rst_n)begin
-    if (!rst_n)begin
+wire [7:0] sum_result;
+
+genvar gen_i;
+generate
+    for (gen_i = 0; gen_i < 16; gen_i = gen_i + 1) begin
+        gf256_power_lut power_lut(
+            .addr   (i * 16 + cnt * 16 + gen_i),
+            .data   (alpha_power[gen_i * 8 +: 8])
+        );
+    end
+endgenerate
+
+genvar gen_j;
+generate
+    for (gen_j = 0; gen_j < 16; gen_j = gen_j + 1) begin
+        gf256_mul mul_inst(
+            .a      (data_in[gen_j * 8 +: 8]),
+            .b      (alpha_power[gen_j * 8 +: 8]),
+            .result (mul_result[gen_j * 8 +: 8])
+        );
+    end
+endgenerate
+
+assign level1[0] = mul_result[0 * 8 +: 8] ^ mul_result[1 * 8 +: 8];
+assign level1[1] = mul_result[2 * 8 +: 8] ^ mul_result[3 * 8 +: 8];
+assign level1[2] = mul_result[4 * 8 +: 8] ^ mul_result[5 * 8 +: 8];
+assign level1[3] = mul_result[6 * 8 +: 8] ^ mul_result[7 * 8 +: 8];
+assign level1[4] = mul_result[8 * 8 +: 8] ^ mul_result[9 * 8 +: 8];
+assign level1[5] = mul_result[10* 8 +: 8] ^ mul_result[11* 8 +: 8];
+assign level1[6] = mul_result[12* 8 +: 8] ^ mul_result[13* 8 +: 8];
+assign level1[7] = mul_result[14* 8 +: 8] ^ mul_result[15* 8 +: 8];
+
+assign level2[0] = level1[0] ^ level1[1];
+assign level2[1] = level1[2] ^ level1[3];
+assign level2[2] = level1[4] ^ level1[5];
+assign level2[3] = level1[6] ^ level1[7];
+
+assign level3[0] = level2[0] ^ level2[1];
+assign level3[1] = level2[2] ^ level2[3];
+
+assign sum_result = level3[0] ^ level3[1];
+
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
         syndrome <= 8'b0;
-    end else begin
-        if (cnt < 8'd255)begin
-            syndrome <= syndrome ^ alpha_power
+        cnt <= 5'b0;
+    end else if (valid_in) begin
+        if (cnt < 5'd15) begin
+            syndrome <= syndrome ^ sum_result;
+            cnt <= cnt + 1'b1;
         end else begin
-            syndrome <= 8'b0;
+            syndrome <= syndrome ^ sum_result;
+            cnt <= 5'b0;
         end
     end
 end
 
-always@(posedge clk or negedge rst_n)begin
-    if (!rst_n)begin
-        cnt <= 8'b0;
-    end else begin
-        if (valid_in || cnt > 0 )begin
-            cnt <= cnt + 1;
-        end 
-    end
-end
-
-assign valid_out = (cnt == 255) ? 1 : 0;
-assign busy = (cnt) ? 1 : 0;
+assign valid_out = (cnt == 5'd15) && valid_in;
 
 endmodule
