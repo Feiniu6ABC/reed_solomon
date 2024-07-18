@@ -6,7 +6,7 @@ module syndrome_slice(
     input [3:0] i,
 
     output reg [7:0] syndrome,
-    output valid_out
+    output reg valid_out
 );
 
 reg [4:0] cnt;
@@ -75,6 +75,15 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
-assign valid_out = (cnt == 5'd15) && valid_in;
+always@(posedge clk or negedge rst_n)begin
+    if (!rst_n)begin
+        valid_out <= 1'b0;
+    end else begin
+        if (cnt == 8'd15)begin
+            valid_out <= 1'b1;
+        end
+    end
+
+end
 
 endmodule
