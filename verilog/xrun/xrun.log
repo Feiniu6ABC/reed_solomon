@@ -1,0 +1,35 @@
+xrun(64): 20.09-s009: (c) Copyright 1995-2021 Cadence Design Systems, Inc.
+TOOL:	xrun(64)	20.09-s009: Started on Jul 18, 2024 at 02:23:41 PDT
+xrun
+	-64bit
+	-sv
+	-notimingcheck
+	-gui
+	-access +rwc
+	-accessreg +rwc
+	-debug
+	-uvmlinedebug
+	-classlinedebug
+	-plidebug
+	-fsmdebug
+	-uvmaccess
+	-date
+	-dumpstack
+	-negdelay
+	-timescale 1ns/100ps
+	-lwdgen
+	-f ../filelist.f
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/bm256_test.v
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/bm_256.v
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/gf256_add.v
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/gf256_inv.v
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/gf256_mul.v
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/gf265_div.v
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/tree_adder.v
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/gf256_power_lut.v
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/syndrome_slice.v
+		/home/autumn/Desktop/rs_code/reed_solomon/verilog/syndrome.v
+	-input ../run.tcl
+	-l xrun.log
+xrun: *E,FILEMIS: Cannot find the provided file /home/autumn/Desktop/rs_code/reed_solomon/verilog/syndrome.v.
+TOOL:	xrun(64)	20.09-s009: Exiting on Jul 18, 2024 at 02:23:42 PDT  (total: 00:00:01)
