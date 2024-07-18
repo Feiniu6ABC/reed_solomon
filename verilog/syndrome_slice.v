@@ -5,10 +5,10 @@ module syndrome_slice(
     input valid_in,
     input [3:0] i,
 
+    output reg [7:0] syndrome,
     output valid_out
 );
 
-reg [7:0] syndrome;
 reg [4:0] cnt;
 
 wire [127:0] alpha_power;
