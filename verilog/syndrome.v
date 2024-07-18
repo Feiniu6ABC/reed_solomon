@@ -31,8 +31,8 @@ endgenerate
 
 genvar gen_j;
 generate
-    for (gen_i = 0; gen_j < 16; gen_j = gen_j+1)begin :gen_syndrome_out
-        assign syndrome_out[gen_j*8 + :8] = syndrome[gen_j];
+    for (gen_j = 0; gen_j < 16; gen_j = gen_j+1)begin :gen_syndrome_out
+        assign syndrome_out[gen_j*8 +:8] = syndrome[gen_j];
     end
 endgenerate
 
