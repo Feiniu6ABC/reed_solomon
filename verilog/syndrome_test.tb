@@ -1,0 +1,100 @@
+`timescale 1ns / 1ps
+
+module syndrome_tb;
+
+reg clk;
+reg rst_n;
+reg [127:0] data_in;
+reg valid_in;
+
+wire [127:0] syndrome_out;
+wire valid_out;
+
+// Instantiate the Unit Under Test (UUT)
+syndrome uut (
+    .clk(clk),
+    .rst_n(rst_n),
+    .data_in(data_in),
+    .valid_in(valid_in),
+    .syndrome_out(syndrome_out),
+    .valid_out(valid_out)
+);
+
+// Clock generation
+always begin
+    #5 clk = ~clk;
+end
+
+// Test data
+reg [7:0] test_data [0:255];
+
+integer i, chunk;
+
+initial begin
+    // Initialize inputs
+    clk = 0;
+    rst_n = 0;
+    valid_in = 0;
+    data_in = 0;
+
+    // Initialize test data
+    for (i = 0; i < 238; i = i + 1) begin
+        test_data[i] = i;
+    end
+    test_data[238] = 29;
+    test_data[239] = 72;
+    test_data[240] = 230;
+    test_data[241] = 179;
+    test_data[242] = 92;
+    test_data[243] = 230;
+    test_data[244] = 35;
+    test_data[245] = 89;
+    test_data[246] = 80;
+    test_data[247] = 93;
+    test_data[248] = 182;
+    test_data[249] = 223;
+    test_data[250] = 246;
+    test_data[251] = 221;
+    test_data[252] = 154;
+    test_data[253] = 96;
+    // Padding the rest with zeros if necessary
+    for (i = 254; i < 256; i = i + 1) begin
+        test_data[i] = 0;
+    end
+
+    // Reset
+    #100;
+    rst_n = 1;
+
+    // Send 256 bytes in 16 chunks
+    for (chunk = 0; chunk < 16; chunk = chunk + 1) begin
+        #10; // Wait for a clock cycle
+        valid_in = 1;
+        data_in = {test_data[chunk*16+15], test_data[chunk*16+14], test_data[chunk*16+13], test_data[chunk*16+12],
+                   test_data[chunk*16+11], test_data[chunk*16+10], test_data[chunk*16+9],  test_data[chunk*16+8],
+                   test_data[chunk*16+7],  test_data[chunk*16+6],  test_data[chunk*16+5],  test_data[chunk*16+4],
+                   test_data[chunk*16+3],  test_data[chunk*16+2],  test_data[chunk*16+1],  test_data[chunk*16]};
+        $display("Sending chunk %d: %h", chunk, data_in);
+        #10; // Hold data for one clock cycle
+        valid_in = 0;
+        #10; // Wait a cycle before next chunk
+    end
+
+    // Wait for syndrome calculation to complete
+    while (!valid_out) #10;
+
+    // Display results
+    $display("Syndrome calculation complete");
+    $display("Syndrome: %h", syndrome_out);
+
+    // End simulation
+    #100;
+    $finish;
+end
+
+// Optional: Monitor changes
+initial begin
+    $monitor("Time=%0t: valid_out=%b, syndrome_out=%h", $time, valid_out, syndrome_out);
+end
+
+endmodule
