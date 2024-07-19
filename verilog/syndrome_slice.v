@@ -24,11 +24,12 @@ genvar gen_i;
 generate
     for (gen_i = 0; gen_i < 16; gen_i = gen_i + 1) begin
         gf256_power_lut power_lut(
-            .addr   (i * 16 + cnt * 16 + gen_i),
+            .addr   (((cnt - 1) * 16 + gen_i )* (i + 1)),
             .data   (alpha_power[gen_i * 8 +: 8])
         );
     end
 endgenerate
+
 
 genvar gen_j;
 generate
