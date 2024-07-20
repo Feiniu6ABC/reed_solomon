@@ -8,4 +8,4 @@
 /home/autumn/Desktop/rs_code/reed_solomon/verilog/gf256_power_lut.v
 /home/autumn/Desktop/rs_code/reed_solomon/verilog/syndrome_slice.v
 /home/autumn/Desktop/rs_code/reed_solomon/verilog/syndrome.v
-/home/autumn/Desktop/rs_code/reed_solomon/verilog/syndrome_tb.sv
+/home/autumn/Desktop/rs_code/reed_solomon/verilog/syndrome_test.sv

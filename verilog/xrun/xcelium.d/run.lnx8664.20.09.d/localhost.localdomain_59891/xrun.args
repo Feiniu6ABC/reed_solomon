@@ -1,0 +1,30 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-64bit
+-sv
+-notimingcheck
+-gui
+-access
++rwc
+-accessreg
++rwc
+-debug
+-uvmlinedebug
+-classlinedebug
+-plidebug
+-fsmdebug
+-uvmaccess
+-date
+-dumpstack
+-negdelay
+-timescale
+1ns/100ps
+-lwdgen
+-f
+../filelist.f
+-input
+../run.tcl
+-l
+xrun.log

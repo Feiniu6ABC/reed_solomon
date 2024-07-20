@@ -1,0 +1,11 @@
+{
+    "lwd_version": "02\/09\/21+00:08:21",
+    "install_root": "\/usr\/Cadence\/xrun",
+    "xlm_version": "20.09-s009",
+    "build_date": "2021.02.09",
+    "xlm_plat": "x86_64",
+    "xlm_bits": "64",
+    "xlm_snapshot": "BerlekampMassey_tb",
+    "xlm_lib": "worklib",
+    "xlm_view": "v"
+}

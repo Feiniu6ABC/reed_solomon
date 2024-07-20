@@ -1,0 +1,15 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-sv
+-UVMLINEDEBUG
+-LINEDEBUG
+-CLASSLINEDEBUG
+-UVMACCESS
+-I_INCDIR
+/usr/Cadence/xrun/tools/methodology/UVM/CDNS-1.1d/sv/src
+-DEFINE
+USE_PARAMETERIZED_WRAPPER
+-I_INCDIR
+/usr/Cadence/xrun/tools/methodology/UVM/CDNS-1.1d/additions/sv

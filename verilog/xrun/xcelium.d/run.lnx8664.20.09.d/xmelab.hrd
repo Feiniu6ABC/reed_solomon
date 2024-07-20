@@ -1,0 +1,15 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-NOTIMINGCHECKS
+-ACCESS
++rwc
+-ACCESSREG
++rwc
+-ACCESS
++rw
++FSMDEBUG
+-timescale
+1ns/100ps
+-LWDGEN

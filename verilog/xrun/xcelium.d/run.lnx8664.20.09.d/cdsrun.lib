@@ -1,0 +1,2 @@
+SOFTINCLUDE /usr/Cadence/xrun/tools/inca/files/cds.lib
+define worklib ../worklib

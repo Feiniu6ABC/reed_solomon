@@ -9,7 +9,9 @@ module syndrome_slice(
     output reg valid_out
 );
 
-reg [4:0] cnt;
+reg [127:0] data_in_reg;
+reg [8:0] cnt;
+
 
 wire [127:0] alpha_power;
 wire [127:0] mul_result;
@@ -19,6 +21,16 @@ wire [7:0] level2[3:0];
 wire [7:0] level3[1:0];
 
 wire [7:0] sum_result;
+
+always@(posedge clk or negedge rst_n)begin
+    if (!rst_n)begin
+        data_in_reg <= 128'b0;
+    end else begin
+        data_in_reg <= data_in;
+    end
+end
+
+
 
 genvar gen_i;
 generate
@@ -35,7 +47,7 @@ genvar gen_j;
 generate
     for (gen_j = 0; gen_j < 16; gen_j = gen_j + 1) begin
         gf256_mul mul_inst(
-            .a      (data_in[gen_j * 8 +: 8]),
+            .a      (data_in_reg[gen_j * 8 +: 8]),
             .b      (alpha_power[gen_j * 8 +: 8]),
             .result (mul_result[gen_j * 8 +: 8])
         );
@@ -64,14 +76,14 @@ assign sum_result = level3[0] ^ level3[1];
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         syndrome <= 8'b0;
-        cnt <= 5'b0;
+        cnt <= 8'b0;
     end else if (valid_in) begin
-        if (cnt < 5'd15) begin
+        if (cnt < 8'd16) begin
             syndrome <= syndrome ^ sum_result;
             cnt <= cnt + 1'b1;
         end else begin
             syndrome <= syndrome ^ sum_result;
-            cnt <= 5'b0;
+            cnt <= 8'b0;
         end
     end
 end

@@ -1,0 +1,10 @@
+lwd_dir /home/autumn/Desktop/rs_code/reed_solomon/verilog/xrun/xcelium.d/worklib/BerlekampMassey_tb/v/debug_db/BerlekampMassey_tb/../..
+snapshot_name worklib.BerlekampMassey_tb:v
+cells 1
+work_directory /home/autumn/Desktop/rs_code/reed_solomon/verilog/xrun
+cdslib ./xcelium.d/run.lnx8664.20.09.d/cds.lib
+cds_implicit_tmplib worklib
+hdlvar ./xcelium.d/run.lnx8664.20.09.d/hdl.var
+platform x86_64
+bits 64
+xprop 0

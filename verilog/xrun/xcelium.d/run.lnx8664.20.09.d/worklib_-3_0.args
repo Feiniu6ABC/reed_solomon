@@ -1,0 +1,28 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-RUNMODE
+-sv
+-UVMLINEDEBUG
+-LINEDEBUG
+-CLASSLINEDEBUG
+-UVMACCESS
+-I_INCDIR
+/usr/Cadence/xrun/tools/methodology/UVM/CDNS-1.1d/sv/src
+-DEFINE
+USE_PARAMETERIZED_WRAPPER
+-I_INCDIR
+/usr/Cadence/xrun/tools/methodology/UVM/CDNS-1.1d/additions/sv
+-UPDATE
+-CDSLIB
+./xcelium.d/run.lnx8664.20.09.d/cdsrun.lib
+-HDLVAR
+./xcelium.d/run.lnx8664.20.09.d/hdlrun.var
+-work
+worklib
+-LINEDEBUG
+-define
+UVM_PLI
+/usr/Cadence/xrun/tools/methodology/UVM/CDNS-1.1d/sv/src/uvm_pkg.sv
+/usr/Cadence/xrun/tools/methodology/UVM/CDNS-1.1d/additions/sv/cdns_uvm_pkg.sv

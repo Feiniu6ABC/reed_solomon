@@ -1,0 +1,9 @@
+define XMSIMRC	( /usr/Cadence/xrun/tools/xcelium/files/xmsimrc, ~/.xmsimrc )
+define AMSRC	( /usr/Cadence/xrun/tools/xcelium/files/amsrc, ~/.amsrc )
+include ./hdlrun.var
+define SNAPSHOT worklib.BerlekampMassey_tb:v
+DEFINE RUNMODEDEFAULT 1
+DEFINE LIB_MAP (  => worklib )
+DEFINE LIB_MAP ($LIB_MAP, + => worklib )
+define ELAB_SNAPSHOT
+define SNAPSHOT worklib.BerlekampMassey_tb:v

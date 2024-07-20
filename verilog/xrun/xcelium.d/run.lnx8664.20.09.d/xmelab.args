@@ -1,0 +1,30 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-loadpli
+/usr/Cadence/xrun/tools/methodology/UVM/CDNS-1.1d/additions/sv/lib/64bit/libuvmpli.so:uvm_pli_boot
+-NOTIMINGCHECKS
+-ACCESS
++rwc
+-ACCESSREG
++rwc
+-ACCESS
++rw
++FSMDEBUG
+-DUMPSTACK
+-NEGDELAY
+-timescale
+1ns/100ps
+-LWDGEN
+-MESSAGES
+-XLMODE
+./xcelium.d/run.lnx8664.20.09.d
+-RUNMODE
+-CDSLIB
+./xcelium.d/run.lnx8664.20.09.d/cds.lib
+-HDLVAR
+./xcelium.d/run.lnx8664.20.09.d/hdl.var
+-WORK
+worklib
+-HASXLMODE
