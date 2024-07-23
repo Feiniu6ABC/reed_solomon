@@ -1,5 +1,3 @@
-
-
 `timescale 1ns / 1ps
 
 module syndrome_tb;
@@ -40,29 +38,26 @@ initial begin
     data_in = 0;
 
     // Initialize test data
-    for (i = 0; i < 238; i = i + 1) begin
+    for (i = 0; i <= 238; i = i + 1) begin
         test_data[i] = i;
     end
-    test_data[238] = 29;
-    test_data[239] = 72;
-    test_data[240] = 230;
-    test_data[241] = 179;
-    test_data[242] = 92;
-    test_data[243] = 230;
-    test_data[244] = 35;
-    test_data[245] = 89;
-    test_data[246] = 80;
-    test_data[247] = 93;
-    test_data[248] = 182;
-    test_data[249] = 223;
-    test_data[250] = 246;
-    test_data[251] = 221;
-    test_data[252] = 154;
-    test_data[253] = 96;
-    // Padding the rest with zeros if necessary
-    for (i = 254; i < 256; i = i + 1) begin
-        test_data[i] = 0;
-    end
+    test_data[239] = 29;
+    test_data[240] = 72;
+    test_data[241] = 230;
+    test_data[242] = 179;
+    test_data[243] = 92;
+    test_data[244] = 230;
+    test_data[245] = 35;
+    test_data[246] = 89;
+    test_data[247] = 80;
+    test_data[248] = 93;
+    test_data[249] = 182;
+    test_data[250] = 223;
+    test_data[251] = 246;
+    test_data[252] = 221;
+    test_data[253] = 154;
+    test_data[254] = 96;
+    test_data[255] = 0;  // Padding the last byte with zero
 
     // Reset
     #100;
@@ -72,6 +67,10 @@ initial begin
     for (chunk = 0; chunk < 16; chunk = chunk + 1) begin
         #10; // Wait for a clock cycle
         valid_in = 1;
+        /*data_in = {test_data[chunk*16], test_data[chunk*16+1], test_data[chunk*16+2], test_data[chunk*16+3],
+           test_data[chunk*16+4], test_data[chunk*16+5], test_data[chunk*16+6], test_data[chunk*16+7],
+           test_data[chunk*16+8], test_data[chunk*16+9], test_data[chunk*16+10], test_data[chunk*16+11],
+           test_data[chunk*16+12], test_data[chunk*16+13], test_data[chunk*16+14], test_data[chunk*16+15]};*/
         data_in = {test_data[chunk*16+15], test_data[chunk*16+14], test_data[chunk*16+13], test_data[chunk*16+12],
                    test_data[chunk*16+11], test_data[chunk*16+10], test_data[chunk*16+9],  test_data[chunk*16+8],
                    test_data[chunk*16+7],  test_data[chunk*16+6],  test_data[chunk*16+5],  test_data[chunk*16+4],
