@@ -26,7 +26,7 @@ genvar gen_i;
 generate
     for (gen_i = 0; gen_i < 16; gen_i = gen_i + 1) begin
         gf256_power_lut power_lut(
-            .addr   ((((cnt) * 16 + gen_i )* (i + 1) % 255)),
+            .addr   ((254 - (cnt * 16 + gen_i )) * (i + 1) % 255),
             .data   (alpha_power[gen_i * 8 +: 8])
         );
     end
