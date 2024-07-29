@@ -5,7 +5,7 @@ n = 255  # 码字长度
 k = 239  # 信息长度
 fcr = 3  # First Consecutive Root，仅在 Forney 算法中使用
 
-GF = galois.GF(2**8, irreducible_poly=0x11D)  # 使用伽罗瓦域 GF(2^8)
+GF = galois.GF(2**8, irreducible_poly=0x11B)  # 使用伽罗瓦域 GF(2^8)
 
 # 生成数据
 data = GF(list(range(k)))
@@ -62,16 +62,8 @@ def chien_search(error_locator_poly):
     return errors
 
 
-def gf256_poly_eval(poly, x):
-    result = GF(0)
-    result = GF(poly.coeffs[::-1][0])
-    for i, coeff in enumerate(poly.coeffs[::-1]):
-        result += coeff * (x ** i)
-    return GF(result)
-
-
 #GF = galois.GF(2**8)
-def forney_algorithm2(error_locator_poly, error_positions, syndromes, fcr):
+def forney_algorithm(error_locator_poly, error_positions, syndromes, fcr):
     alpha = GF.primitive_element
     print("ALPHA IN forney is: ", alpha)
     syndrome_poly = galois.Poly(syndromes[::-1], field=GF)
@@ -102,7 +94,7 @@ def forney_algorithm2(error_locator_poly, error_positions, syndromes, fcr):
     
     for i in error_positions:
         print(f"value of alpha power 254 is {int(GF(2) ** 254):02X}, alpha is {int(alpha)}")
-        X_i_inv = alpha ** (i + 1)
+        X_i_inv = alpha ** (i + 1)  #(255 - (254 - i))
         print(f"value of i is {i} and alpha**(254 - i) {int(X_i_inv):02X}")
         omega_value = omega_poly(X_i_inv)
         print(f"result of eval poly is: {omega_value}")
@@ -142,13 +134,13 @@ print(encoded_data)
 encoded_data[0] = GF(1)
 encoded_data[1] = GF(0)
 encoded_data[2] = GF(0)
-#encoded_data[4] = GF(0)
-#encoded_data[254] = GF(0)
+encoded_data[4] = GF(0)
+encoded_data[254] = GF(0)
 
 #encoded_data[3] = GF(0)
-#encoded_data[5] = GF(0)
-#encoded_data[7] = GF(0)
-#encoded_data[253] = GF(0)
+encoded_data[5] = GF(0)
+encoded_data[7] = GF(0)
+encoded_data[253] = GF(0)
 
 
 syndromes = calculate_syndromes(encoded_data)
@@ -160,10 +152,7 @@ calculated_error_positions = chien_search(error_locator_poly)
 print(f"_____________________Calculated error positions: {calculated_error_positions}")
 
 # 使用 Forney 算法计算错误值
-#for i in range(0, 5):
-#error_values = forney_algorithm2(error_locator_poly, calculated_error_positions, syndromes, 1)
-error_values = forney_algorithm2(error_locator_poly, calculated_error_positions, syndromes, 1)
-#print(f"Calculated error values: {error_values}")
+error_values = forney_algorithm(error_locator_poly, calculated_error_positions, syndromes, 1)
 
 
 # 纠正错误
