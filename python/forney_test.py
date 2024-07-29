@@ -5,7 +5,7 @@ n = 255  # 码字长度
 k = 239  # 信息长度
 fcr = 3  # First Consecutive Root，仅在 Forney 算法中使用
 
-GF = galois.GF(2**8, irreducible_poly=galois.Poly([1, 0, 0, 0, 1, 1, 1, 0, 1]))  # 使用伽罗瓦域 GF(2^8)
+GF = galois.GF(2**8, irreducible_poly=0x11D)  # 使用伽罗瓦域 GF(2^8)
 
 # 生成数据
 data = GF(list(range(k)))
@@ -46,7 +46,7 @@ def calculate_syndromes(received):
 def chien_search(error_locator_poly):
     sigma = error_locator_poly.coeffs
     alpha = GF.primitive_element
-    print(alpha)
+    print("ALPHA IN chien serach is: ", alpha)
     errors = []
     
     for i in range(n - 1, -1, -1):  # 从 254 到 0
@@ -70,72 +70,10 @@ def gf256_poly_eval(poly, x):
     return GF(result)
 
 
-
-def forney_algorithm(error_locator_poly, error_positions, syndromes, fcr):
-    alpha = GF.primitive_element
-    syndrome_poly = galois.Poly(syndromes[::-1], field=GF)
-    print("error_locator is : ", error_locator_poly)
-    print("syndrome is : ", syndrome_poly)
-
-    new_coeffs = [0] * len(error_locator_poly.coeffs)
-    for i in range(0, len(error_locator_poly.coeffs), 2):
-        new_coeffs[i] = error_locator_poly.coeffs[i]
-
-    x_sigma_prime_poly = galois.Poly(new_coeffs, field=GF)
-    print("newcoeffs______ x_sigma_prime_poly is : ", x_sigma_prime_poly)
-    
-
-    product = syndrome_poly * error_locator_poly
-    print("product is :", product)
-
-    t = len(syndromes) // 2
-    omega_coeffs = product.coeffs[-(2*t - 1):]
-    omega_poly = galois.Poly(omega_coeffs, field=GF)
-    print("omega poly is: ", omega_poly)
-    
-    error_values = []
-    
-    for j in error_positions:
-        #print("valie of j is: ", j)
-        X_i_inv = alpha ** (-j)
-        omega_value = omega_poly(X_i_inv)
-        #print("omega value is : ", omega_value)
-        print(f"omega value is : 0x{omega_value:02X}")
-        print(f"X_i_inv is: {X_i_inv:02X}")
-        
-        new_coeffs = [0] * len(error_locator_poly.coeffs)
-
-        x_sigma_prime_value = GF(0)
-        for i in range(1, len(error_locator_poly.coeffs)):
-            print(f"error_locator_poly.coeffs[i] is {error_locator_poly.coeffs[::-1][i]}")
-            if i % 2 == 1:
-                x_sigma_prime_value += error_locator_poly.coeffs[::-1][i] * X_i_inv**(i)
-        print("_____________________________________________")
-        print(f"x_sigma_prime is: {x_sigma_prime_value:02X}")
-        print(f"x_sigma_prime poly is: {x_sigma_prime_poly(X_i_inv):02X}")
-        print("_____________________________________________")
-
-        print(f"omega / x_sigma_prime is: {(omega_value / x_sigma_prime_value):02X}")
-        
-        error_value = ((X_i_inv) ** (-fcr)) * (omega_value / x_sigma_prime_value)
-
-        print(f"Calculated error values: {error_value:02X}")
-        error_values.append(int(error_value))
-        
-        #print(f"Error position: {j}")
-        #print(f"X_i_inv: {X_i_inv}")
-        #print(f"omega_value: {omega_value}")
-        #print(f"x_sigma_prime_value: {x_sigma_prime_value}")
-        #print(f"Calculated error value: {error_value}")
-        print("--------------------")
-    
-    return error_values
-
-import galois
-
 #GF = galois.GF(2**8)
 def forney_algorithm2(error_locator_poly, error_positions, syndromes, fcr):
-    alpha = GF(3)
+    alpha = GF.primitive_element
+    print("ALPHA IN forney is: ", alpha)
     syndrome_poly = galois.Poly(syndromes[::-1], field=GF)
     error_locator_poly = galois.Poly(error_locator_poly.coeffs[::-1], field=GF)
     print("error_locator is : ", error_locator_poly)
@@ -163,11 +101,11 @@ def forney_algorithm2(error_locator_poly, error_positions, syndromes, fcr):
     error_values = []
     
     for i in error_positions:
-        print(f"value of alpha power 254 is {int(GF(3) ** 254):02X}, alpha is {int(alpha)}")
-        X_i_inv = alpha ** (254 - i)
+        print(f"value of alpha power 254 is {int(GF(2) ** 254):02X}, alpha is {int(alpha)}")
+        X_i_inv = alpha ** (i + 1)
         print(f"value of i is {i} and alpha**(254 - i) {int(X_i_inv):02X}")
         omega_value = omega_poly(X_i_inv)
-        print(f"result of eval poly is: {gf256_poly_eval(omega_poly, X_i_inv)}")
+        print(f"result of eval poly is: {omega_value}")
         print(f"omega value is : 0x{int(omega_value):02X}")
         print(f"X_i_inv is: {int(X_i_inv):02X}")
         
